@@ -1,0 +1,26 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "mealplanner-ca213",
+          "appId": "1:489027201520:android:196eb88b614d8b55659535",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "mealplanner-ca213",
+          "configurations": {
+            "android": "1:489027201520:android:196eb88b614d8b55659535",
+            "ios": "1:489027201520:ios:44d73246534eaa2c659535",
+            "web": "1:489027201520:web:caa384771782b71f659535"
+          }
+        }
+      }
+    }
+  }
+}

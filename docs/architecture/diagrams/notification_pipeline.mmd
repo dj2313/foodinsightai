@@ -1,0 +1,10 @@
+flowchart TD
+  eventSource[AgentEventSource] --> notificationRequest
+  notificationRequest[notification.requested] --> notificationAgent
+  notificationAgent -->|Dedup/Throttle| formatter
+  formatter[NotificationFormatter] --> delivery
+  delivery[FCM/EmailSender] --> statusUpdate
+  statusUpdate --> historyAgent
+  statusUpdate --> syncAgent
+  statusUpdate --> ui[UserUI]
+

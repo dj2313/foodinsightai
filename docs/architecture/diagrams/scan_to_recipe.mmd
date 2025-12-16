@@ -1,0 +1,14 @@
+flowchart TD
+  ui[UserUI] --> apiGateway
+  apiGateway --> orchestrator
+  orchestrator --> foodVision
+  foodVision -->|IngredientsFound| nutritionAgent
+  foodVision --> expiryAgent
+  nutritionAgent --> recipeAgent
+  recipeAgent --> mealPlanner
+  expiryAgent --> notificationAgent
+  mealPlanner --> notificationAgent
+  orchestrator --> historyAgent
+  historyAgent --> syncAgent
+  notificationAgent --> ui
+

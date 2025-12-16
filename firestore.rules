@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isUserDoc(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isOwner() {
+      return isSignedIn() && (
+        (request.resource.data.userId != null && request.resource.data.userId == request.auth.uid) ||
+        (resource.data.userId != null && resource.data.userId == request.auth.uid)
+      );
+    }
+
+    // User profile documents; document ID must equal uid.
+    match /users/{userId} {
+      allow read, write: if isUserDoc(userId);
+
+      // Nested collections under the user doc are also user-scoped.
+      match /{subcollection}/{doc} {
+        allow read, write: if isUserDoc(userId);
+      }
+    }
+
+    // Pantry items owned by the user (must include userId field).
+    match /pantry_items/{itemId} {
+      allow read, write: if isOwner();
+    }
+
+    // Scans owned by the user (must include userId field).
+    match /scans/{scanId} {
+      allow read: if isOwner();
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isOwner();
+    }
+
+    // Meal plans (must include userId field).
+    match /meal_plans/{planId} {
+      allow read, write: if isOwner();
+    }
+
+    // Notifications (must include userId field).
+    match /notifications/{noteId} {
+      allow read, write: if isOwner();
+    }
+
+    // Event log (must include userId field). Writes only by owner; no deletes.
+    match /events/{eventId} {
+      allow read: if isOwner();
+      allow create: if isOwner();
+      allow update, delete: if false;
+    }
+
+    // Default deny.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

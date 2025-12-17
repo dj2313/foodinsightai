@@ -40,5 +40,39 @@ class PantryItem {
         return Colors.red;
     }
   }
-}
 
+  String get statusLabel {
+    switch (status) {
+      case PantryStatus.fresh:
+        return 'Fresh';
+      case PantryStatus.warning:
+        return '3 days left';
+      case PantryStatus.urgent:
+        return 'Expires soon';
+      case PantryStatus.expired:
+        return 'Expired';
+    }
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'quantityLabel': quantityLabel,
+      'category': category,
+      'expiry': expiry?.toIso8601String(),
+      'imageUrl': imageUrl,
+    };
+  }
+
+  factory PantryItem.fromMap(Map<String, dynamic> map, String id) {
+    return PantryItem(
+      id: id,
+      name: map['name'] ?? '',
+      quantityLabel: map['quantityLabel'] ?? '',
+      category: map['category'] ?? '',
+      imageUrl: map['imageUrl'] ?? '',
+      expiry: map['expiry'] != null ? DateTime.parse(map['expiry']) : null,
+    );
+  }
+}

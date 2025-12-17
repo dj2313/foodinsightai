@@ -15,7 +15,7 @@ class AppRoot extends ConsumerWidget {
     final themeMode = ref.watch(themeModeProvider);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'FoodSight AI',
+      title: 'FoodInsight',
       themeMode: themeMode,
       theme: _lightTheme,
       darkTheme: _darkTheme,

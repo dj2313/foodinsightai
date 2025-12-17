@@ -45,9 +45,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     );
     if (mounted && ok) {
       AppToast.show('Account created. Please log in.');
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      }
     }
   }
 

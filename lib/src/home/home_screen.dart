@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'search_screen.dart';
+import '../common/widgets/loading_overlay.dart';
+import '../common/models/user_preferences.dart';
 import '../auth/auth_providers.dart';
 import '../common/toast.dart';
-import '../common/widgets/scan_fab.dart';
+
 import '../common/widgets/mobile_navbar.dart';
+import '../common/utils/scan_helper.dart';
 import '../ai/chef_service.dart';
 import '../common/providers/pantry_provider.dart';
 import '../recipes/recipe_detail_screen.dart';
@@ -17,19 +21,30 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     Future<void> _generateMeal() async {
-      AppToast.show('Chef AI is thinking...');
+      // Show loading overlay
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              const LoadingOverlay(message: 'Chef AI is thinking...'),
+        ),
+      );
+
       try {
-        final pantryItems = ref.read(pantryProvider);
+        final pantryAsync = ref.read(pantryProvider);
+        final pantryItems = pantryAsync.asData?.value ?? [];
+
         if (pantryItems.isEmpty) {
+          Navigator.of(context).pop(); // Dismiss loading
           AppToast.show('Pantry is empty! Scan some items first.');
           return;
         }
 
         final recipe = await ref
             .read(chefServiceProvider)
-            .generateRecipe(pantryItems);
+            .generateRecipe(pantryItems, const UserPreferences());
 
         if (context.mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => RecipeDetailScreen(recipe: recipe),
@@ -37,7 +52,30 @@ class HomeScreen extends ConsumerWidget {
           );
         }
       } catch (e) {
-        AppToast.show('Error: $e');
+        if (context.mounted) {
+          Navigator.of(context).pop(); // Dismiss loading
+
+          if (e.toString().contains('DAILY_LIMIT_REACHED')) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Daily Limit Reached'),
+                content: const Text(
+                  'You have used your 2 free AI scans for today. '
+                  'Try manually adding items to your pantry instead!',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('OK'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            AppToast.show('Error: ${e.toString()}');
+          }
+        }
       }
     }
 
@@ -80,8 +118,8 @@ class HomeScreen extends ConsumerWidget {
                               children: [
                                 _Header(
                                   name: name,
-                                  onAvatarTap: () =>
-                                      AppToast.show('Profile coming soon...'),
+                                  onChatTap: () =>
+                                      AppToast.show('Chef Chat coming soon...'),
                                 ),
                                 const SizedBox(height: 16),
                                 _SearchBar(),
@@ -122,15 +160,10 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              Positioned(
-                bottom: 100,
-                left: 0,
-                right: 0,
-                child: Center(child: ScanFab()),
-              ),
               MobileNavbar(
                 current: MainTab.home,
                 onSelect: (tab) => _handleNav(context, ref, tab),
+                onScan: () => ScanHelper.handleScan(context, ref),
               ),
             ],
           ),
@@ -163,9 +196,9 @@ class HomeScreen extends ConsumerWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.name, required this.onAvatarTap});
+  const _Header({required this.name, required this.onChatTap});
   final String name;
-  final VoidCallback onAvatarTap;
+  final VoidCallback onChatTap;
 
   @override
   Widget build(BuildContext context) {
@@ -200,7 +233,25 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        _LiveAvatar(onTap: onAvatarTap),
+        Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: IconButton(
+            onPressed: onChatTap,
+            icon: const Icon(Icons.chat_bubble_outline_rounded),
+            color: const Color(0xFFE11D48),
+            tooltip: 'Chat with Chef',
+          ),
+        ),
       ],
     );
   }
@@ -210,7 +261,9 @@ class _SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => AppToast.show('Search coming soon...'),
+      onTap: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const SearchScreen())),
       child: Container(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
@@ -735,127 +788,6 @@ class _DailySummaryCard extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _LiveAvatar extends StatefulWidget {
-  const _LiveAvatar({required this.onTap});
-  final VoidCallback onTap;
-
-  @override
-  State<_LiveAvatar> createState() => _LiveAvatarState();
-}
-
-class _LiveAvatarState extends State<_LiveAvatar>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _opacityAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    )..repeat();
-
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.4,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-
-    _opacityAnimation = Tween<double>(
-      begin: 0.6,
-      end: 0.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: SizedBox(
-        width: 58,
-        height: 58,
-        child: Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: [
-            // Pulsing Ring
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return Transform.scale(
-                  scale: _scaleAnimation.value,
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(
-                          0xFFE11D48,
-                        ).withOpacity(_opacityAnimation.value),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-            // Avatar Image
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.background,
-                  width: 3,
-                ),
-                image: const DecorationImage(
-                  image: CachedNetworkImageProvider(
-                    'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
-                  ),
-                  fit: BoxFit.cover,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-            ),
-            // Live Status Badge
-            Positioned(
-              bottom: 4,
-              right: 4,
-              child: Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF22C55E),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.background,
-                    width: 2,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

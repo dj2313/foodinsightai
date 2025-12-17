@@ -38,8 +38,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
     if (!mounted) return;
     if (ok) {
-      AppToast.show('Welcome back!');
-      Navigator.of(context).popUntil((route) => route.isFirst);
+      AppToast.show('Welcome back!', type: ToastType.success);
+      // Pop back to AuthGate if we were pushed here
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
     }
   }
 
@@ -154,7 +157,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               alignment: Alignment.centerRight,
                               child: TextButton(
                                 onPressed: () {
-                                  AppToast.show('Forgot password coming soon');
+                                  AppToast.show(
+                                    'Forgot password coming soon',
+                                    type: ToastType.info,
+                                  );
                                 },
                                 child: const Text(
                                   'Forgot Password?',
@@ -190,7 +196,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     label: 'Google',
                                     icon: Icons.g_mobiledata,
                                     onPressed: () {
-                                      AppToast.show('Google sign-in coming soon');
+                                      AppToast.show(
+                                        'Google sign-in coming soon',
+                                        type: ToastType.info,
+                                      );
                                     },
                                   ),
                                 ),
@@ -200,7 +209,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     label: 'Apple',
                                     icon: Icons.apple,
                                     onPressed: () {
-                                      AppToast.show('Apple sign-in coming soon');
+                                      AppToast.show(
+                                        'Apple sign-in coming soon',
+                                        type: ToastType.info,
+                                      );
                                     },
                                   ),
                                 ),

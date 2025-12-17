@@ -12,14 +12,18 @@ class AuthGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authStateChangesProvider);
+    final hasSeenOnboarding = ref.watch(hasSeenOnboardingProvider);
 
     return authState.when(
       data: (user) {
-        if (user == null) {
-          // TODO: decide when to show onboarding vs login based on local flag.
+        if (user != null) {
+          return const HomeScreen();
+        }
+        // User is null (logged out)
+        if (!hasSeenOnboarding) {
           return const OnboardingScreen();
         }
-        return const HomeScreen();
+        return const LoginScreen();
       },
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),

@@ -1,11 +1,11 @@
 {
-    "name": "mealplanner",
-    "short_name": "mealplanner",
+    "name": "FoodInsight",
+    "short_name": "FoodInsight",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Smart Meal Planner with AI Vision & Chef",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

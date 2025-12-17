@@ -1,22 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+
 import '../../ai/vision_service.dart';
 import '../providers/pantry_provider.dart';
 import '../toast.dart';
 
-class ScanFab extends ConsumerStatefulWidget {
-  const ScanFab({super.key});
+class ScanHelper {
+  static Future<void> handleScan(BuildContext context, WidgetRef ref) async {
+    final picker = ImagePicker();
 
-  @override
-  ConsumerState<ScanFab> createState() => _ScanFabState();
-}
-
-class _ScanFabState extends ConsumerState<ScanFab> {
-  final ImagePicker _picker = ImagePicker();
-  bool _isLoading = false;
-
-  Future<void> _handleScan() async {
     // Show options: Camera or Gallery
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
@@ -59,80 +52,29 @@ class _ScanFabState extends ConsumerState<ScanFab> {
     if (source == null) return;
 
     try {
-      final XFile? image = await _picker.pickImage(source: source);
+      final XFile? image = await picker.pickImage(source: source);
       if (image == null) return;
 
-      setState(() => _isLoading = true);
-      AppToast.show('Analyzing image with Gemini...');
+      AppToast.show('Analyzing image with AI...');
+
+      // We don't have a loading state for the UI here since it's a static helper.
+      // Ideally we'd show a global loader or toast.
 
       final items = await ref.read(visionServiceProvider).analyzeImage(image);
 
       if (items.isEmpty) {
         AppToast.show('No food items identified.');
       } else {
-        // Add to pantry
-        // Note: We need a method in PantryProvider to add multiple items.
-        // For now we add one by one or we need to update provider.
-        // Assuming add(item) exists.
         final controller = ref.read(pantryControllerProvider);
         await controller.addAll(items);
-
-        AppToast.show('Success! Added ${items.length} items to Pantry.');
-
-        // Optional: Navigate to Pantry Screen
-        // Navigator.of(context).pushNamedAndRemoveUntil('/pantry', (_) => false);
+        AppToast.show(
+          'Success! Added ${items.length} items to Pantry.',
+          type: ToastType.success,
+        );
       }
     } catch (e) {
-      AppToast.show('Error: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      AppToast.show('Error: $e', type: ToastType.error);
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Container(
-        width: 72,
-        height: 72,
-        decoration: const BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white,
-          boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
-        ),
-        child: const Center(child: CircularProgressIndicator(strokeWidth: 3)),
-      );
-    }
-
-    return Container(
-      width: 72,
-      height: 72,
-      decoration: const BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: [Color(0xFFFF9100), Color(0xFFFF5E00)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x66FF7A00),
-            blurRadius: 18,
-            offset: Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(36),
-          onTap: _handleScan,
-          child: const Center(
-            child: Icon(Icons.qr_code_scanner, color: Colors.white, size: 30),
-          ),
-        ),
-      ),
-    );
   }
 }
 

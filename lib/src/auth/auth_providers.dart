@@ -14,3 +14,7 @@ final firestoreProvider = Provider<FirebaseFirestore>(
 final authStateChangesProvider = StreamProvider<User?>(
   (ref) => ref.watch(firebaseAuthProvider).authStateChanges(),
 );
+
+/// Tracks if the user has completed onboarding in this session.
+/// In a real app, this should be persisted using SharedPreferences.
+final hasSeenOnboardingProvider = StateProvider<bool>((ref) => false);

@@ -7,8 +7,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
+import '../auth_providers.dart';
 import '../providers/onboarding_provider.dart';
-import 'signup_screen.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -26,10 +26,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     super.dispose();
   }
 
-  void _goToSignup() {
-    Navigator.of(
-      context,
-    ).pushReplacement(MaterialPageRoute(builder: (_) => const SignupScreen()));
+  void _completeOnboarding() {
+    ref.read(hasSeenOnboardingProvider.notifier).state = true;
   }
 
   @override
@@ -58,7 +56,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         curve: Curves.easeOut,
                       );
                     } else {
-                      _goToSignup();
+                      _completeOnboarding();
                     }
                   },
                 );

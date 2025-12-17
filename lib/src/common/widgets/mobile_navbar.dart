@@ -10,10 +10,12 @@ class MobileNavbar extends StatefulWidget {
     super.key,
     required this.current,
     required this.onSelect,
+    required this.onScan,
   });
 
   final MainTab current;
   final void Function(MainTab) onSelect;
+  final VoidCallback onScan;
 
   @override
   State<MobileNavbar> createState() => _MobileNavbarState();
@@ -29,78 +31,72 @@ class _MobileNavbarState extends State<MobileNavbar> {
     return Align(
       alignment: Alignment.bottomCenter,
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.only(bottom: 24),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(32),
+          borderRadius: BorderRadius.circular(40),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               decoration: BoxDecoration(
                 color: isDark
-                    ? Colors.black.withOpacity(0.1)
-                    : Colors.white.withOpacity(0.8),
-                borderRadius: BorderRadius.circular(32),
+                    ? Colors.black.withOpacity(0.6)
+                    : Colors.white.withOpacity(0.85),
+                borderRadius: BorderRadius.circular(40),
                 border: Border.all(
                   color: isDark
                       ? Colors.white.withOpacity(0.1)
-                      : Colors.black.withOpacity(0.1),
+                      : Colors.black.withOpacity(0.05),
                   width: 1,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _NavItem(
                     icon: Icons.home_rounded,
-                    label: 'Home',
                     isActive: widget.current == MainTab.home,
                     isHovered: _hoveredIndex == 0,
                     onTap: () => widget.onSelect(MainTab.home),
-                    onHover: (hovering) {
-                      setState(() {
-                        _hoveredIndex = hovering ? 0 : null;
-                      });
-                    },
+                    onHover: (hovering) =>
+                        setState(() => _hoveredIndex = hovering ? 0 : null),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 16),
                   _NavItem(
                     icon: Icons.restaurant_menu_rounded,
-                    label: 'Recipes',
                     isActive: widget.current == MainTab.recipes,
                     isHovered: _hoveredIndex == 1,
                     onTap: () => widget.onSelect(MainTab.recipes),
-                    onHover: (hovering) {
-                      setState(() {
-                        _hoveredIndex = hovering ? 1 : null;
-                      });
-                    },
+                    onHover: (hovering) =>
+                        setState(() => _hoveredIndex = hovering ? 1 : null),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 24),
+                  // Center Scan Button
+                  _ScanButton(onTap: widget.onScan),
+                  const SizedBox(width: 24),
                   _NavItem(
                     icon: Icons.inventory_2_rounded,
-                    label: 'Pantry',
                     isActive: widget.current == MainTab.pantry,
                     isHovered: _hoveredIndex == 2,
                     onTap: () => widget.onSelect(MainTab.pantry),
-                    onHover: (hovering) {
-                      setState(() {
-                        _hoveredIndex = hovering ? 2 : null;
-                      });
-                    },
+                    onHover: (hovering) =>
+                        setState(() => _hoveredIndex = hovering ? 2 : null),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 16),
                   _NavItem(
                     icon: Icons.person_rounded,
-                    label: 'Profile',
                     isActive: widget.current == MainTab.profile,
                     isHovered: _hoveredIndex == 3,
                     onTap: () => widget.onSelect(MainTab.profile),
-                    onHover: (hovering) {
-                      setState(() {
-                        _hoveredIndex = hovering ? 3 : null;
-                      });
-                    },
+                    onHover: (hovering) =>
+                        setState(() => _hoveredIndex = hovering ? 3 : null),
                   ),
                 ],
               ),
@@ -115,7 +111,6 @@ class _MobileNavbarState extends State<MobileNavbar> {
 class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.icon,
-    required this.label,
     required this.isActive,
     required this.isHovered,
     required this.onTap,
@@ -123,7 +118,6 @@ class _NavItem extends StatelessWidget {
   });
 
   final IconData icon;
-  final String label;
   final bool isActive;
   final bool isHovered;
   final VoidCallback onTap;
@@ -132,87 +126,72 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final activeColor = const Color(0xFFFF7A00); // Brand Orange
 
     return MouseRegion(
       onEnter: (_) => onHover(true),
       onExit: (_) => onHover(false),
       child: GestureDetector(
         onTap: onTap,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // Icon container
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOut,
-              width: 56,
-              height: 56,
-              transform: Matrix4.identity()
-                ..translate(0.0, isHovered ? -8.0 : 0.0)
-                ..scale(isHovered ? 1.1 : 1.0),
-              decoration: BoxDecoration(
-                color: isHovered ? Colors.white : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Center(
-                child: AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 300),
-                  style: TextStyle(
-                    color: isHovered
-                        ? Colors.black
-                        : (isDark
-                              ? Colors.white.withOpacity(0.8)
-                              : Colors.black.withOpacity(0.8)),
-                  ),
-                  child: Icon(
-                    icon,
-                    size: 24,
-                    color: isHovered
-                        ? Colors.black
-                        : (isDark
-                              ? Colors.white.withOpacity(0.8)
-                              : Colors.black.withOpacity(0.8)),
-                  ),
-                ),
-              ),
-            ),
-            // Label that appears below on hover or when active
-            Positioned(
-              top: 52,
-              left: 0,
-              right: 0,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
-                opacity: (isHovered || isActive) ? 1.0 : 0.0,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOut,
-                  transform: Matrix4.identity()
-                    ..translate(0.0, (isHovered || isActive) ? 0.0 : 4.0),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white : Colors.black,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          color: isDark ? Colors.black : Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: isActive
+                ? activeColor.withOpacity(0.1)
+                : (isHovered
+                      ? (isDark
+                            ? Colors.white10
+                            : Colors.black.withOpacity(0.05))
+                      : Colors.transparent),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(
+            icon,
+            size: 24,
+            color: isActive
+                ? activeColor
+                : (isDark ? Colors.white54 : Colors.black54),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ScanButton extends StatelessWidget {
+  const _ScanButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFF9100), Color(0xFFFF5E00)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFFF5E00).withOpacity(0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
             ),
           ],
+        ),
+        child: const Icon(
+          Icons.document_scanner_rounded, // or qr_code_scanner
+          color: Colors.white,
+          size: 24,
         ),
       ),
     );

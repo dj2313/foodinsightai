@@ -6,6 +6,12 @@ import '../auth/auth_controller.dart';
 import '../auth/auth_providers.dart';
 import '../common/providers/theme_provider.dart';
 import '../common/widgets/mobile_navbar.dart';
+import '../common/utils/scan_helper.dart';
+import '../common/toast.dart';
+import 'edit_profile_dialog.dart';
+import 'change_password_dialog.dart';
+import 'dietary_preferences_screen.dart';
+import 'privacy_terms_screen.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -63,6 +69,12 @@ class ProfileScreen extends ConsumerWidget {
                             _RowTile(
                               icon: Icons.restaurant_menu,
                               label: 'Dietary Preferences',
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const DietaryPreferencesScreen(),
+                                ),
+                              ),
                             ),
                             _RowTile(icon: Icons.flag, label: 'Health Goals'),
                             _RowTile(
@@ -116,10 +128,20 @@ class ProfileScreen extends ConsumerWidget {
                             _RowTile(
                               icon: Icons.lock,
                               label: 'Change Password',
+                              onTap: () => showDialog(
+                                context: context,
+                                builder: (context) =>
+                                    const ChangePasswordDialog(),
+                              ),
                             ),
                             _RowTile(
                               icon: Icons.description,
                               label: 'Privacy & Terms',
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const PrivacyTermsScreen(),
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -154,6 +176,7 @@ class ProfileScreen extends ConsumerWidget {
               MobileNavbar(
                 current: MainTab.profile,
                 onSelect: (tab) => _handleNav(context, tab),
+                onScan: () => ScanHelper.handleScan(context, ref),
               ),
             ],
           ),
@@ -247,7 +270,19 @@ class _ProfileHeader extends ConsumerWidget {
               ],
             ),
           ),
-          OutlinedButton(onPressed: () {}, child: const Text('Edit')),
+          OutlinedButton(
+            onPressed: () async {
+              final result = await showDialog<bool>(
+                context: context,
+                builder: (context) => const EditProfileDialog(),
+              );
+              if (result == true) {
+                // Refresh the UI by invalidating the provider
+                ref.invalidate(authStateChangesProvider);
+              }
+            },
+            child: const Text('Edit'),
+          ),
         ],
       ),
     );
@@ -301,9 +336,10 @@ class _Section extends StatelessWidget {
 }
 
 class _RowTile extends StatelessWidget {
-  const _RowTile({required this.icon, required this.label});
+  const _RowTile({required this.icon, required this.label, this.onTap});
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -316,8 +352,12 @@ class _RowTile extends StatelessWidget {
       ),
       title: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () {},
+      onTap: onTap ?? () => _showComingSoon(context),
     );
+  }
+
+  static void _showComingSoon(BuildContext context) {
+    AppToast.show('Coming soon!', type: ToastType.info);
   }
 }
 

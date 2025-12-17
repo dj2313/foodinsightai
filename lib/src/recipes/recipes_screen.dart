@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import '../common/models/recipe.dart';
 import '../common/providers/recipes_provider.dart';
 import '../common/widgets/mobile_navbar.dart';
+import '../common/utils/scan_helper.dart';
+import 'recipe_detail_screen.dart';
 
 class RecipesScreen extends ConsumerStatefulWidget {
   const RecipesScreen({super.key});
@@ -26,141 +28,151 @@ class _RecipesScreenState extends ConsumerState<RecipesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final recipes = ref.watch(recipesProvider);
-    final basedOnPantry = ref.watch(filteredRecipesProvider);
-    final list = _selected == 'All'
-        ? recipes
-        : recipes.where((r) => r.tags.contains(_selected)).toList();
+    final recipesAsync = ref.watch(savedRecipesProvider);
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return recipesAsync.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stack) =>
+          Scaffold(body: Center(child: Text('Error: $error'))),
+      data: (recipes) {
+        final list = _selected == 'All'
+            ? recipes
+            : recipes.where((r) => r.tags.contains(_selected)).toList();
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
-        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-        systemNavigationBarColor: Colors.transparent,
-        systemNavigationBarIconBrightness: isDark
-            ? Brightness.light
-            : Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.background,
-        body: SafeArea(
-          child: Stack(
-            children: [
-              Column(
+        // Placeholder for future logic
+        // final basedOnPantry = list;
+
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: isDark
+                ? Brightness.light
+                : Brightness.dark,
+            statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+            systemNavigationBarColor: Colors.transparent,
+            systemNavigationBarIconBrightness: isDark
+                ? Brightness.light
+                : Brightness.dark,
+          ),
+          child: Scaffold(
+            backgroundColor: Theme.of(context).colorScheme.background,
+            body: SafeArea(
+              child: Stack(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Recipes',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w800,
-                              ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Recipes',
+                                  style: TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Your cookbook',
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Discover meals you’ll love',
-                              style: TextStyle(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.w600,
-                              ),
+                            IconButton(
+                              onPressed: () {},
+                              icon: const Icon(Icons.tune),
                             ),
                           ],
                         ),
-                        IconButton(
-                          onPressed: () {},
-                          icon: const Icon(Icons.tune),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search recipes, cuisines, ingredients…',
-                        prefixIcon: const Icon(Icons.search),
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide.none,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Search saved recipes…',
+                            prefixIcon: const Icon(Icons.search),
+                            filled: true,
+                            fillColor: Theme.of(context).colorScheme.surface,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 44,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      scrollDirection: Axis.horizontal,
-                      itemBuilder: (context, index) {
-                        final f = _filters[index];
-                        final selected = f == _selected;
-                        return ChoiceChip(
-                          label: Text(f),
-                          selected: selected,
-                          onSelected: (_) => setState(() => _selected = f),
-                          selectedColor: Theme.of(context).colorScheme.primary,
-                          labelStyle: TextStyle(
-                            color: selected
-                                ? Colors.white
-                                : Theme.of(context).colorScheme.onSurface,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        );
-                      },
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
-                      itemCount: _filters.length,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
-                      children: [
-                        _SectionHeader(title: 'Featured Recipes'),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          height: 180,
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: list.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 12),
-                            itemBuilder: (context, index) =>
-                                _FeaturedCard(recipe: list[index]),
-                          ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 44,
+                        child: ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          scrollDirection: Axis.horizontal,
+                          itemBuilder: (context, index) {
+                            final f = _filters[index];
+                            final selected = f == _selected;
+                            return ChoiceChip(
+                              label: Text(f),
+                              selected: selected,
+                              onSelected: (_) => setState(() => _selected = f),
+                              selectedColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                              labelStyle: TextStyle(
+                                color: selected
+                                    ? Colors.white
+                                    : Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            );
+                          },
+                          separatorBuilder: (_, __) => const SizedBox(width: 8),
+                          itemCount: _filters.length,
                         ),
-                        const SizedBox(height: 22),
-                        _SectionHeader(title: 'Based on your pantry'),
-                        const SizedBox(height: 12),
-                        ...basedOnPantry.map((r) => _RecipeTile(recipe: r)),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+                          children: [
+                            if (list.isNotEmpty) ...[
+                              _SectionHeader(title: 'Saved Recipes'),
+                              const SizedBox(height: 12),
+                              ...list.map((r) => _RecipeTile(recipe: r)),
+                            ] else
+                              const Padding(
+                                padding: EdgeInsets.all(20),
+                                child: Center(
+                                  child: Text("No saved recipes yet."),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  MobileNavbar(
+                    current: MainTab.recipes,
+                    onSelect: (tab) => _handleNav(context, tab),
+                    onScan: () => ScanHelper.handleScan(context, ref),
                   ),
                 ],
               ),
-              MobileNavbar(
-                current: MainTab.recipes,
-                onSelect: (tab) => _handleNav(context, tab),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -200,49 +212,8 @@ class _SectionHeader extends StatelessWidget {
           title,
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
         ),
-        TextButton(onPressed: () {}, child: const Text('See all')),
+        // TextButton(onPressed: () {}, child: const Text('See all')),
       ],
-    );
-  }
-}
-
-class _FeaturedCard extends StatelessWidget {
-  const _FeaturedCard({required this.recipe});
-  final Recipe recipe;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 240,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        image: DecorationImage(
-          image: NetworkImage(recipe.imageUrl),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          gradient: const LinearGradient(
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-            colors: [Colors.black54, Colors.transparent],
-          ),
-        ),
-        padding: const EdgeInsets.all(14),
-        child: Align(
-          alignment: Alignment.bottomLeft,
-          child: Text(
-            recipe.title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
@@ -275,6 +246,12 @@ class _RecipeTile extends StatelessWidget {
             width: 72,
             height: 72,
             fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => Container(
+              width: 72,
+              height: 72,
+              color: Colors.grey[300],
+              child: const Icon(Icons.broken_image, color: Colors.grey),
+            ),
           ),
         ),
         title: Text(
@@ -291,7 +268,13 @@ class _RecipeTile extends StatelessWidget {
           ),
         ),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () {},
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => RecipeDetailScreen(recipe: recipe),
+            ),
+          );
+        },
       ),
     );
   }

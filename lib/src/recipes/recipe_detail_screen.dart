@@ -2,13 +2,38 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../common/models/recipe.dart';
 
-class RecipeDetailScreen extends StatelessWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../auth/auth_providers.dart';
+import '../recipes/data/recipe_repository.dart';
+import '../common/toast.dart';
+
+class RecipeDetailScreen extends ConsumerWidget {
   const RecipeDetailScreen({super.key, required this.recipe});
   final Recipe recipe;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final user = ref.read(authStateChangesProvider).value;
+          if (user == null) {
+            AppToast.show('Please login to save recipes.');
+            return;
+          }
+          AppToast.show('Saving recipe...'); // Immediate feedback
+          try {
+            await ref
+                .read(recipeRepositoryProvider)
+                .saveRecipe(user.uid, recipe);
+            AppToast.show('Recipe saved to your cookbook!');
+          } catch (e) {
+            AppToast.show('Failed to save: $e');
+          }
+        },
+        label: const Text('Save Recipe'),
+        icon: const Icon(Icons.bookmark_add),
+      ),
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -96,6 +121,8 @@ class RecipeDetailScreen extends StatelessWidget {
                       ),
                     ),
                   ],
+                  // Add padding at bottom for FAB
+                  const SizedBox(height: 80),
                 ],
               ),
             ),

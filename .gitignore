@@ -45,5 +45,11 @@ app.*.map.json
 /android/app/release
 
 .env
+GEMINI_SETUP.md
+MIGRATION_TO_OPENROUTER.md
+MODEL_COMPARISON.md
+OPENROUTER_SETUP.md
+PROFILE_FEATURES.md
+VISION_MODEL_FIX.md
 
 lib/firebase_options.dart
